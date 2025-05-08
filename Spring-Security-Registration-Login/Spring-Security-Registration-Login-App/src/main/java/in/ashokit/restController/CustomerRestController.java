@@ -7,12 +7,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import in.ashokit.entity.Customer;
 import in.ashokit.repo.CustomerRepository;
+import in.ashokit.service.JWTService;
 
 @RestController
 public class CustomerRestController {
@@ -26,6 +28,9 @@ public class CustomerRestController {
 	@Autowired
 	private AuthenticationManager authManager;
 
+	@Autowired
+	private JWTService jwtService;
+	
 	@PostMapping("/register")
 	public ResponseEntity<String> saveCustomer(@RequestBody Customer customer) {
 		String password = pwdEncoder.encode(customer.getPwd());
@@ -37,6 +42,12 @@ public class CustomerRestController {
 		return new ResponseEntity<>("Customer Registered", HttpStatus.CREATED);
 	}
 
+	@GetMapping("/welcome")
+	public String welcome()
+	{
+		return "Welcome to Spring Security Login Registration";
+	}
+	
 	@PostMapping("/login")
 	public ResponseEntity<String> loginCustomer(@RequestBody Customer customer) {
 
@@ -48,7 +59,9 @@ public class CustomerRestController {
 			Authentication authenticate = authManager.authenticate(emailPwdAuthToken);
 			
 			if(authenticate.isAuthenticated()) {
-				return new ResponseEntity<>("Welcome to the Website!! , You are a Trusted User", HttpStatus.OK);
+				
+				String jwtToken = jwtService.generateToken(customer.getEmail());
+				return new ResponseEntity<>(jwtToken, HttpStatus.OK);
 			}
 			
 		} catch (Exception e)
